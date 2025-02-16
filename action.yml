@@ -1,0 +1,36 @@
+name: "Translate Files with OpenAI ChatGPT"
+description: "Detects changes in specified file types, translates them using OpenAI API, and commits the translations."
+author: "Iman Nemati"
+branding:
+  icon: "book-open"
+  color: "blue"
+
+inputs:
+  openai_api_key:
+    description: "OpenAI API Key"
+    required: true
+  target_lang:
+    description: "Target language for translation (e.g., Persian, Spanish, German, French)"
+    required: false
+    default: "Persian"
+  target_lang_code:
+    description: "Target language code. (e.g: fa for Persian, or ru for Russian)"
+    required: false
+    default: "fa"
+  file_exts:
+    description: "Comma-separated list of file extensions to translate (e.g., md,json,txt)"
+    required: false
+    default: "md"
+  output_format:
+    description: "Pattern for translated filenames. Use {lang} for language and {ext} for extension (e.g., *-{lang}.{ext}, translated_*.{ext})"
+    required: false
+    default: "*-{lang}.{ext}"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  env:
+    OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+    TARGET_LANGUAGE: ${{ inputs.target_language }}
+    FILE_EXTENSIONS: ${{ inputs.file_extensions }}
+    OUTPUT_FORMAT: ${{ inputs.output_format }}
