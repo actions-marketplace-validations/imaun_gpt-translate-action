@@ -16,8 +16,8 @@ This GitHub Action detects changes in specified file types (Markdown, JSON, TXT,
 - Commits and pushes the translated files back to the repository.
 
 ---
-📌 Example Usage
-Add the following workflow to your `.github/workflows/translate.yml` file:
+## 📌 Example Usage
+Add the following workflow to your `.github/workflows/translate.yml` file (or add the step in any of your pipelines!):
 
 ```yaml
 name: Translate Files
