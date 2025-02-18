@@ -2,10 +2,10 @@
 ---
 This GitHub Action detects changes in specified file types (Markdown, JSON, TXT, etc.), translates the modified content using OpenAI GPT-4, and commits the translations back to your repository.
 
-✅ Supports multiple file extensions
-✅ Preserves YAML front matter in markdown files
-✅ Allows custom output file formats
-✅ Automatically commits and pushes translated files
+- ✅ Supports multiple file extensions
+- ✅ Preserves YAML front matter in markdown files
+- ✅ Allows custom output file formats
+- ✅ Automatically commits and pushes translated files
 
 ---
 ## 🛠 How It Works
@@ -58,4 +58,38 @@ jobs:
 - Go to **Settings** → **Secrets and Variables** → **Actions** in your repository.
 - Click **New Repository Secret**.
 - Add a secret named `OPENAI_API_KEY` and paste your OpenAI API key.
+
+---
+## 📌 Example Translated File
+Original Markdown (about.md):
+
+```md
+---
+slug: "about"
+title: "About Me"
+author: "John Doe"
+description: "This is my personal website."
+---
+
+Welcome to my personal website! Here you can find my projects and blog posts.
+```
+Translated (about-fr.md for French):
+
+```md
+---
+slug: "about"
+title: "À propos de moi"
+author: "John Doe"
+description: "Ceci est mon site Web personnel."
+---
+
+Bienvenue sur mon site personnel ! Vous pouvez y trouver mes projets et articles de blog.
+```
+---
+## 🛠 Running Locally (For Testing)
+```bash
+docker build -t translate-action .
+docker run -e OPENAI_API_KEY="your-api-key" -e TARGET_LANG="French" TARGET_LANG_CODE="fr" translate-action
+```
+
 
