@@ -39,7 +39,8 @@ jobs:
         uses: imaun/gpt-translate-action@v1.0
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          target_language: "French"
+          target_lang: "French"
+          target_lang_code: "fr"
           file_extensions: "md,json,txt"
           output_format: "translated_*.{ext}"
 ```
