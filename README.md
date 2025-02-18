@@ -52,8 +52,8 @@ jobs:
 - `output_format`: Format for translated files. Use {lang} for language and {ext} for extension.
 
 ## 🎯 Example Output Filenames
-- "*-{lang}.{ext}": about-fa.md
-- "translated_*.{ext}": translated_about.json
+- `*-{lang}.{ext}`: about-fa.md
+- `translated_*.{ext}`: translated_about.json
 
 ## 🔑 Setting Up OpenAI API Key
 - Go to **Settings** → **Secrets and Variables** → **Actions** in your repository.
