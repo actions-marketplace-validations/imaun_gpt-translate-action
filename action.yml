@@ -1,4 +1,4 @@
-name: "GPT Translate - Translate any files with OpenAI ChatGPT"
+name: "GPT Translate Action - Translate any files with OpenAI ChatGPT"
 description: "Detects changes in specified file types, translates them using OpenAI API, and commits the translations."
 author: "Iman Nemati"
 branding:
