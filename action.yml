@@ -31,6 +31,7 @@ runs:
   image: "Dockerfile"
   env:
     OPENAI_API_KEY: ${{ inputs.openai_api_key }}
-    TARGET_LANGUAGE: ${{ inputs.target_language }}
-    FILE_EXTENSIONS: ${{ inputs.file_extensions }}
+    TARGET_LANG: ${{ inputs.target_lang }}
+    TARGET_LANG_CODE: ${{ inputs.target_lang_code }}
+    FILE_EXTS: ${{ inputs.file_extensions }}
     OUTPUT_FORMAT: ${{ inputs.output_format }}

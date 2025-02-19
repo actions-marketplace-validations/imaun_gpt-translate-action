@@ -1,9 +1,10 @@
 FROM python:3.9
 
-WORKDIR /github/workspace
+WORKDIR /app
 
-COPY . .
+COPY translate.py .
+COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT [ "python", "translate.py" ]
+ENTRYPOINT ["python", "/app/translate.py"]
