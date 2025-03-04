@@ -36,14 +36,20 @@ def reconstruct_markdown(yaml_data, translated_content):
 
 
 def translate_text(text):
+    system_propmt = SYSTEM_PROMPT.replace('{TARGET_LANG}', TARGET_LANG)
+    user_prompt = USER_PROMPT.replace('{TARGET_LANG}', TARGET_LANG).replace('{text}', text)
+
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {
                 "role": "system",
-                "content": f"You are a translator specializing in software development. Preserve YAML metadata and technical terms. Translate the text to {TARGET_LANG}."
+                "content": system_propmt
             },
-            {"role": "user", "content": f"Translate this text to {TARGET_LANG} while keeping YAML keys unchanged:\n{text}"},
+            {
+                "role": "user", 
+                "content": user_prompt 
+            },
         ],
     )
     return response["choices"][0]["message"]["content"].strip()
