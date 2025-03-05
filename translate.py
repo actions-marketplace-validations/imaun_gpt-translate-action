@@ -5,7 +5,7 @@ import subprocess
 import re
 from glob import glob
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+API_KEY = os.getenv('API_KEY')
 TARGET_LANG = os.getenv('TARGET_LANG', 'Persian') # Default: Persian
 TARGET_LANG_CODE = os.getenv('TARGET_LANG_CODE', 'fa') # Default: fa
 FILE_EXTS = os.getenv('FILE_EXTS','md') # Default: Markdown files
@@ -15,10 +15,10 @@ USER_PROMPT = os.getenv('USER_PROMPT', 'Translate this text to {TARGET_LANG} whi
 AI_SERVICE = os.getenv('AI_SERVICE', 'openai')
 AI_MODEL = os.getenv('MODEL', 'gpt-4')
 
-if not OPENAI_API_KEY:
+if not API_KEY:
     raise ValueError('Missing OpenAI API key!')
 
-openai.api_key = OPENAI_API_KEY
+openai.api_key = API_KEY
 
 
 def extract_yaml_and_content(md_text):
