@@ -3,6 +3,7 @@ import yaml
 import openai
 import subprocess
 import re
+import requests
 from glob import glob
 
 API_KEY = os.getenv('API_KEY')
@@ -10,8 +11,14 @@ TARGET_LANG = os.getenv('TARGET_LANG', 'Persian') # Default: Persian
 TARGET_LANG_CODE = os.getenv('TARGET_LANG_CODE', 'fa') # Default: fa
 FILE_EXTS = os.getenv('FILE_EXTS','md') # Default: Markdown files
 OUTPUT_FORMAT = os.getenv('OUTPUT_FORMAT', '*-{lang}.{ext}') # Default: *-fa.md
-SYSTEM_PROMPT = os.getenv('SYSTEM_PROMPT', 'You are a translator specializing in software development. Preserve YAML metadata and technical terms. Translate the text to {TARGET_LANG}.')
-USER_PROMPT = os.getenv('USER_PROMPT', 'Translate this text to {TARGET_LANG} while keeping YAML keys unchanged:\n{text}')
+SYSTEM_PROMPT = os.getenv(
+    'SYSTEM_PROMPT', 
+    'You are a translator specializing in software development. Preserve YAML metadata and technical terms. Translate the text to {TARGET_LANG}.'
+)
+USER_PROMPT = os.getenv(
+    'USER_PROMPT', 
+    'Translate this text to {TARGET_LANG} while keeping YAML keys unchanged:\n{text}'
+)
 AI_SERVICE = os.getenv('AI_SERVICE', 'openai')
 AI_MODEL = os.getenv('MODEL', 'gpt-4')
 
@@ -36,23 +43,23 @@ def reconstruct_markdown(yaml_data, translated_content):
 
 
 def translate_text(text):
-    system_propmt = SYSTEM_PROMPT.replace('{TARGET_LANG}', TARGET_LANG)
+    """Determines the AI provider and fetches the translation."""
+    system_prompt = SYSTEM_PROMPT.replace('{TARGET_LANG}', TARGET_LANG)
     user_prompt = USER_PROMPT.replace('{TARGET_LANG}', TARGET_LANG).replace('{text}', text)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {
-                "role": "system",
-                "content": system_propmt
-            },
-            {
-                "role": "user", 
-                "content": user_prompt 
-            },
-        ],
-    )
-    return response["choices"][0]["message"]["content"].strip()
+    if AI_SERVICE.lower() == 'openai':
+        return translate_with_openai(system_prompt, user_prompt)
+
+    elif AI_SERVICE.lower() == 'gemini':
+        return translate_with_gemini(system_prompt, user_prompt)
+
+    elif AI_SERVICE.lower() == 'claude':
+        return translate_with_claude(system_prompt, user_prompt)
+
+    elif AI_SERVICE.lower() == 'azure':
+        return translate_with_azure(text)
+    else:
+        raise ValueError(f'Unsupported AI service: {AI_SERVICE}')
 
 
 def get_changed_files():
@@ -72,6 +79,66 @@ def get_translated_filename(file_path):
     base_name = ".".join(file_path.split(".")[:-1])  # Remove extension
     lang_code = f'-{TARGET_LANG_CODE.lower()}'
     return OUTPUT_FORMAT.replace("{lang}", lang_code).replace("{ext}", ext).replace("*", base_name)
+
+
+def translate_with_openai(system_prompt, user_prompt):
+    """Translation using OpenAI """
+    response = openai.ChatCompletion.create(
+        model=AI_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
+
+def translate_with_gemini(system_prompt, user_prompt):
+    """Translation using Google Gemini API."""
+    prompt = f'{system_prompt}\n\n{user_prompt}'
+    gemini_api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": AI_MODEL,
+        "prompt": prompt,
+        "temperature": 0.7,
+    }
+    response = requests.post(f"{gemini_api_url}?key={API_KEY}", json=payload, headers=headers)
+    return response.json().get("candidates", [{}])[0].get("output", "").strip()
+
+
+def translate_with_claude(system_prompt, user_prompt):
+    """Translation using Anthropic Claude API."""
+    prompt = f'{system_prompt}\n\n{user_prompt}'
+    claude_api_url = "https://api.anthropic.com/v1/messages"
+    headers = {
+        "x-api-key": API_KEY,
+        "content-type": "application/json",
+        "anthropic-version": "2023-06-01",
+    }
+    payload = {
+        "model": AI_MODEL,
+        "max_tokens": 1000,
+        "messages": [
+            {"role": "user", "content": prompt }
+        ],
+    }
+    response = requests.post(claude_api_url, json=payload, headers=headers)
+    return response.json().get("content", "").strip()
+
+
+def translate_with_azure(text):
+    """Translation using Microsoft Azure Translator API."""
+    azure_endpoint = "https://api.cognitive.microsofttranslator.com/translate"
+    headers = {
+        "Ocp-Apim-Subscription-Key": API_KEY,
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Region": os.getenv("AZURE_REGION", "westeurope"),
+    }
+    params = {"api-version": "3.0", "to": TARGET_LANG_CODE}
+    body = [{"text": text}]
+    response = requests.post(azure_endpoint, params=params, headers=headers, json=body)
+    return response.json()[0]["translations"][0]["text"].strip()
 
 
 def main():
