@@ -6,9 +6,17 @@ branding:
   color: "blue"
 
 inputs:
-  openai_api_key:
-    description: "OpenAI API Key"
+  api_key:
+    description: "AI Service API Key"
     required: true
+  ai_service:
+    description: "AI service provider"
+    required: false
+    default: "openai"
+  ai_model:
+    description: "AI model"
+    required: false
+    default: "gpt-4"
   target_lang:
     description: "Target language for translation (e.g., Persian, Spanish, German, French)"
     required: false
@@ -30,8 +38,10 @@ runs:
   using: "docker"
   image: "Dockerfile"
   env:
-    OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+    API_KEY: ${{ inputs.api_key }}
+    AI_SERVICE: ${{ inputs.ai_service }}
+    AI_MODEL: ${{ inputs.ai_model }}
     TARGET_LANG: ${{ inputs.target_lang }}
     TARGET_LANG_CODE: ${{ inputs.target_lang_code }}
-    FILE_EXTS: ${{ inputs.file_extensions }}
+    FILE_EXTS: ${{ inputs.file_exts }}
     OUTPUT_FORMAT: ${{ inputs.output_format }}
