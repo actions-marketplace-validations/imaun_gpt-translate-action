@@ -97,5 +97,3 @@ Bienvenue sur mon site personnel ! Vous pouvez y trouver mes projets et articles
 docker build -t translate-action .
 docker run -e API_KEY="your-api-key" -e AI_SERVICE="gemini" -e TARGET_LANG="French" -e TARGET_LANG_CODE="fr" translate-action
 ```
-
-
