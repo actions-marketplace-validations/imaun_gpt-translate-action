@@ -1,38 +1,54 @@
 import os
 import yaml
-import openai
+from openai import OpenAI
 import subprocess
 import re
 import requests
 from glob import glob
 
 API_KEY = os.getenv('API_KEY')
+if not API_KEY:
+    print("API key not found. Please set the API_KEY variable.")
+    raise ValueError("API key not found.")
+
 TARGET_LANG = os.getenv('TARGET_LANG', 'Persian') # Default: Persian
+print('* Target Language:', TARGET_LANG)
+
 TARGET_LANG_CODE = os.getenv('TARGET_LANG_CODE', 'fa') # Default: fa
+print('* Target Language Code:', TARGET_LANG_CODE)
+
 FILE_EXTS = os.getenv('FILE_EXTS','md') # Default: Markdown files
+print('* File Extensions:', FILE_EXTS)
+
 OUTPUT_FORMAT = os.getenv('OUTPUT_FORMAT', '*-{lang}.{ext}') # Default: *-fa.md
+print('* Output Format:', OUTPUT_FORMAT)
+
 SYSTEM_PROMPT = os.getenv(
     'SYSTEM_PROMPT', 
-    'You are a translator specializing in software development. Preserve YAML metadata and technical terms. Translate the text to {TARGET_LANG}.'
+    'You are a translator specializing in software development. Preserve YAML metadata, HTML, and other markuo formats or codes. and also technical terms in general software development DO NOT translate them to target language. Translate the text to {TARGET_LANG}.'
 )
+print('* System Prompt:', SYSTEM_PROMPT)
+
 USER_PROMPT = os.getenv(
     'USER_PROMPT', 
-    'Translate this text to {TARGET_LANG} while keeping YAML keys unchanged:\n{text}'
+    'Translate this text to {TARGET_LANG} while keeping YAML keys, Any html or json markups unchanged:\n{text}'
 )
+print('* User Prompt:', USER_PROMPT)
+
 AI_SERVICE = os.getenv('AI_SERVICE', 'openai')
+print('* AI Service:', AI_SERVICE)
+
 AI_MODEL = os.getenv('MODEL', 'gpt-4')
+print('* AI Model:', AI_MODEL)
 
-if not API_KEY:
-    raise ValueError('Missing OpenAI API key!')
-
-openai.api_key = API_KEY
-
+BASE_BRANCH = os.getenv('BASE_BRANCH', os.getenv("GITHUB_BASE_REF"))
+print('* Base Branch:', BASE_BRANCH)
 
 def extract_yaml_and_content(md_text):
     match = re.match(r"^---\n(.*?)\n---\n(.*)", md_text, re.DOTALL)
     if match:
-        yaml_part, content = match.group()
-        yaml_data = yaml.safe_load(yaml_part)
+        yaml_part, content = match.groups()
+        yaml_data = yaml.safe_load(yaml_part.strip())
         return yaml_data, content.strip()
     return None, md_text.strip()
 
@@ -63,34 +79,67 @@ def translate_text(text):
 
 
 def get_changed_files():
+    file_exts = [ext.strip() for ext in FILE_EXTS.split(",")]
+
+    subprocess.run(["git", "config", "--global", "--add", "safe.directory", "/github/workspace"], check=True)
+
+    print("* GitHub Event Name:", os.getenv("GITHUB_EVENT_NAME"))
+
+    before_sha = os.getenv("GITHUB_EVENT_BEFORE")
+    print('* Before SHA:', before_sha)
+
+    after_sha = os.getenv("GITHUB_SHA")
+    print('* After SHA:', after_sha)
+
+    if not before_sha or not after_sha:
+        print("Missing GITHUB_EVENT_BEFORE or GITHUB_SHA; falling back to HEAD~1")
+        before_sha = "HEAD~1"
+        after_sha = "HEAD"
+
+    diff_result = subprocess.run(
+        ["git", "diff", "--diff-filter=AM", "--name-only", before_sha, after_sha],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+
+    all_changed = diff_result.stdout.splitlines()
+    lang_code_suffixes = [f"-{TARGET_LANG_CODE.lower()}.{ext}" for ext in file_exts]
     changed_files = []
-    for ext in FILE_EXTS:
-        result = subprocess.run(
-            ["git", "diff", "--name-only", "HEAD~1", "--", f"*.{ext.strip()}"],
-            capture_output=True,
-            text=True,
-        )
-        changed_files.extend([file.strip() for file in result.stdout.split("\n") if file.strip()])
+
+    for f in all_changed:
+        if any(f.endswith(f".{ext}") for ext in file_exts):
+            if not is_translated_file(f):
+                changed_files.append(f)
+
     return changed_files
 
 
 def get_translated_filename(file_path):
+    lang_code = TARGET_LANG_CODE.lower()
     ext = file_path.split(".")[-1]
     base_name = ".".join(file_path.split(".")[:-1])  # Remove extension
-    lang_code = f'-{TARGET_LANG_CODE.lower()}'
+    
     return OUTPUT_FORMAT.replace("{lang}", lang_code).replace("{ext}", ext).replace("*", base_name)
+
+
+def is_translated_file(file_path):
+    expected_translated = get_translated_filename(file_path)
+    return os.path.basename(file_path) == os.path.basename(expected_translated)
 
 
 def translate_with_openai(system_prompt, user_prompt):
     """Translation using OpenAI """
-    response = openai.ChatCompletion.create(
+    openai_client = OpenAI(api_key=API_KEY)
+
+    response = openai_client.chat.completions.create(
         model=AI_MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
     )
-    return response["choices"][0]["message"]["content"].strip()
+    return response.choices[0].message.content.strip()
 
 
 def translate_with_gemini(system_prompt, user_prompt):
@@ -149,6 +198,10 @@ def main():
 
     for file_path in changed_files:
         print(f"Processing: {file_path}")
+
+        if not os.path.exists(file_path):
+            print(f"File not found, skipping: {file_path}")
+            continue
 
         with open(file_path, "r", encoding="utf-8") as f:
             file_text = f.read()

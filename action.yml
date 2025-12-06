@@ -10,11 +10,11 @@ inputs:
     description: "AI Service API Key"
     required: true
   ai_service:
-    description: "AI service provider"
+    description: "AI service provider (openai, gemini, claude, azure)"
     required: false
     default: "openai"
   ai_model:
-    description: "AI model"
+    description: "AI model Specify model (e.g., gemini-pro, claude-v1)"
     required: false
     default: "gpt-4"
   target_lang:
@@ -33,6 +33,17 @@ inputs:
     description: "Pattern for translated filenames. Use {lang} for language and {ext} for extension (e.g., *-{lang}.{ext}, translated_*.{ext})"
     required: false
     default: "*-{lang}.{ext}"
+  user_prompt:
+    description: "Customized user-prompt to send to AI model."
+    required: false
+    default: "Translate this text to {TARGET_LANG} while keeping YAML keys, Any html or json markups unchanged:\n{text}"
+  system_prompt:
+    description: "Customized system-prompt to send to AI model."
+    required: false
+    default: "You are a translator specializing in software development. Preserve YAML metadata, HTML, and other markuo formats or codes. and also technical terms in general software development DO NOT translate them to target language. Translate the text to {TARGET_LANG}."
+  base_branch:
+    description: "The base branch to diff against (if not automatically detected)"
+    required: false
 
 runs:
   using: "docker"
@@ -45,3 +56,4 @@ runs:
     TARGET_LANG_CODE: ${{ inputs.target_lang_code }}
     FILE_EXTS: ${{ inputs.file_exts }}
     OUTPUT_FORMAT: ${{ inputs.output_format }}
+    BASE_BRANCH: ${{ inputs.base_branch }}

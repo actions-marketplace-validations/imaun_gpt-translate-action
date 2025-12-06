@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run Translation Action
-        uses: imaun/gpt-translate-action@v1.4
+        uses: imaun/gpt-translate-action@v1.9.0
         with:
           api_key: ${{ secrets.API_KEY }}
           ai_service: "openai"  # Options: openai, gemini, claude, azure
@@ -46,6 +46,7 @@ jobs:
           target_lang_code: "fr"
           file_extensions: "md,json,txt"
           output_format: "translated_*.{ext}"
+          base_branch: main # Default is GITHUB_BASE_REF from env
 ```
 ## ⚙️ Inputs
 - `api_key` (Required): Your AI provider API key (stored as a GitHub Secret).
@@ -55,12 +56,13 @@ jobs:
 - `target_lang_code`: The language code to be used in output format (default: **fa**).
 - `file_exts`: Comma-separated list of file types to process (default: **md**).
 - `output_format`: Format for translated files. Use {lang} for language and {ext} for extension.
+- `base_branch`: The base branch to diff against (if not automatically detected). Default is `GITHUB_BASE_REF` from env.
 
 ## 🎯 Example Output Filenames
 - `*-{lang}.{ext}`: about-fa.md
 - `translated_*.{ext}`: translated_about.json
 
-## 🔑 Setting Up OpenAI API Key
+## 🔑 Setting Up the API Key
 - Go to **Settings** → **Secrets and Variables** → **Actions** in your repository.
 - Click **New Repository Secret**.
 - Add a secret named `API_KEY` and paste your AI service API key.
