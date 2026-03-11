@@ -38,7 +38,7 @@ print('* User Prompt:', USER_PROMPT)
 AI_SERVICE = os.getenv('AI_SERVICE', 'openai')
 print('* AI Service:', AI_SERVICE)
 
-AI_MODEL = os.getenv('MODEL', 'gpt-4')
+AI_MODEL = os.getenv('AI_MODEL', 'gpt-4')
 print('* AI Model:', AI_MODEL)
 
 BASE_BRANCH = os.getenv('BASE_BRANCH', os.getenv("GITHUB_BASE_REF"))
